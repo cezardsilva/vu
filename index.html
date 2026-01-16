@@ -1,268 +1,297 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="rainbow.png" type="image/png" />
-  <title>BOIOLOMETRO</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="rainbow.png" type="image/png" />
+    <link rel="shortcut icon" href="rainbow.png" />
+    <link rel="apple-touch-icon" href="rainbow.png" />
+    <title>BOIOLOMETRO</title>
+    <style>
+      body {
+        background: #111;
+        color: #eee;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
 
-  <style>
-    body {
-      background: #111;
-      color: #eee;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
+      .vu-container {
+        position: relative;
+        width: min(90vw, 500px);
+        padding-bottom: 80px;
+      }
 
-    /* ⚙️ engrenagem */
-    .gear {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      font-size: 26px;
-      cursor: pointer;
-      user-select: none;
-      z-index: 100;
-    }
+      .vu-container img {
+        width: 100%;
+        display: block;
+      }
 
-    .vu-container {
-      position: relative;
-      width: min(90vw, 500px);
-      padding-bottom: 80px;
-    }
+      .needle {
+        position: absolute;
+        width: 4px;
+        height: 300px;
+        background: black;
+        bottom: 20px;
+        left: 50%;
+        transform-origin: bottom center;
+        transform: translateX(-50%) rotate(-35deg);
+        border-radius: 2px;
+        pointer-events: none;
+      }
 
-    .vu-container img {
-      width: 100%;
-      display: block;
-    }
+      .pivot {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: black;
+        border-radius: 50%;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+      }
 
-    .needle {
-      position: absolute;
-      width: 4px;
-      height: 300px;
-      background: black;
-      bottom: 20px;
-      left: 50%;
-      transform-origin: bottom center;
-      transform: translateX(-50%) rotate(-41deg);
-      border-radius: 2px;
-      pointer-events: none;
-    }
+      .led {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        background: rgb(179, 7, 7);
+        border-radius: 50%;
+        bottom: 308px;
+        left: 50%;
+        transform: translateX(-50%);
+        visibility: hidden;
+      }
 
-    .pivot {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      background: black;
-      border-radius: 50%;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-    }
+      button {
+        margin-top: 40px;
+        padding: 12px 30px;
+        font-size: 16px;
+        border-radius: 30px;
+        cursor: pointer;
+        user-select: none;
+      }
 
-    .led {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      background: rgb(179, 7, 7);
-      border-radius: 50%;
-      left: 50%;
-      transform: translateX(-50%);
-      visibility: hidden;
-    }
+      /* engrenagem */
+      .gear {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        font-size: 26px;
+        cursor: pointer;
+        user-select: none;
+      }
 
-    button {
-      margin-top: 40px;
-      padding: 12px 30px;
-      font-size: 16px;
-      border-radius: 30px;
-      cursor: pointer;
-      background: #222;
-      color: #eee;
+      /* modal */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
 
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
+      .modal-content {
+        background: #222;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+      }
 
-    button:hover {
-      background: #066603;
-      color: white;
-    }
+      .control {
+        margin-bottom: 16px;
+      }
 
-    /* ===== MODAL ===== */
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
+      .control label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
 
-    .modal-box {
-      background: #222;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 360px;
-    }
+      .control span {
+        float: right;
+        font-weight: bold;
+      }
 
-    .modal-box h3 {
-      margin-top: 0;
-    }
+      input[type="range"] {
+        width: 100%;
+      }
+    </style>
+  </head>
 
-    .control {
-      margin-bottom: 14px;
-    }
+  <body>
+    <div class="gear" id="gear">⚙️</div>
 
-    .control label {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-
-    .control input {
-      width: 100%;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="gear" id="gear">⚙️</div>
-
-  <div class="vu-container">
-    <img src="vu.jpg" alt="VU Meter" />
-    <div class="needle" id="needle"></div>
-    <div class="pivot"></div>
-    <div class="led" id="led"></div>
-  </div>
-
-  <button id="btn">BOIOLÔMETRO</button>
-
-  <!-- MODAL -->
-  <div class="modal" id="modal">
-    <div class="modal-box">
-      <h3>Ajustes</h3>
-
-      <div class="control">
-        <label>Curso do ponteiro</label>
-        <input type="range" id="rangeAngle" min="20" max="90" value="41">
-      </div>
-
-      <div class="control">
-        <label>Posição do LED</label>
-        <input type="range" id="rangeLed" min="200" max="360" value="308">
-      </div>
-
-      <button onclick="closeModal()">Fechar</button>
+    <div class="vu-container">
+      <img src="vu.jpg" alt="VU Meter" />
+      <div class="needle" id="needle"></div>
+      <div class="pivot"></div>
+      <div class="led" id="led"></div>
     </div>
-  </div>
 
-<script>
-  const needle = document.getElementById("needle");
-  const button = document.getElementById("btn");
-  const led = document.getElementById("led");
+    <button id="btn">BOIOLÔMETRO</button>
 
-  let MIN_ANGLE = -41;
-  let MAX_ANGLE = 41;
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <h3>Ajustes</h3>
 
-  let currentAngle = MIN_ANGLE;
-  let targetAngle = MIN_ANGLE;
-  let lastTime = null;
+        <div class="control">
+          <label>
+            Ângulo mínimo
+            <span id="minVal"></span>
+          </label>
+          <input type="range" id="minAngle" min="-80" max="0" />
+        </div>
 
-  /* ==== AUDIO CONTÍNUO ==== */
-  let audioCtx, oscillator, gainNode;
-  let isPressed = false;
+        <div class="control">
+          <label>
+            Ângulo máximo
+            <span id="maxVal"></span>
+          </label>
+          <input type="range" id="maxAngle" min="0" max="80" />
+        </div>
 
-  function initAudio() {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    oscillator = audioCtx.createOscillator();
-    gainNode = audioCtx.createGain();
+        <div class="control">
+          <label>
+            Altura do LED
+            <span id="ledVal"></span>
+          </label>
+          <input type="range" id="ledPos" min="200" max="360" />
+        </div>
 
-    oscillator.type = "sine";
-    oscillator.frequency.value = 440;
-    gainNode.gain.value = 0;
+        <button onclick="closeModal()">Fechar</button>
+      </div>
+    </div>
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    <script>
+      const needle = document.getElementById("needle");
+      const led = document.getElementById("led");
+      const btn = document.getElementById("btn");
 
-    oscillator.start(); // roda continuamente
-  }
+      /* ======= MEMÓRIA ======= */
+      let MIN_ANGLE = Number(localStorage.getItem("minAngle")) || -41;
+      let MAX_ANGLE = Number(localStorage.getItem("maxAngle")) || 41;
+      let LED_POS = Number(localStorage.getItem("ledPos")) || 308;
 
-  function updateAudio(level) {
-    if (!audioCtx) return;
+      led.style.bottom = LED_POS + "px";
 
-    if (isPressed) {
-      oscillator.frequency.value = 120 + level * 880;
-      gainNode.gain.value = level * 0.15;
-    } else {
-      gainNode.gain.value = 0;
-    }
-  }
+      let currentAngle = MIN_ANGLE;
+      let targetAngle = MIN_ANGLE;
+      let lastTime = null;
 
-  function updateLed(level) {
-    led.style.visibility = level > 0.85 ? "visible" : "hidden";
-  }
+      /* ======= ÁUDIO ======= */
+      let audioCtx, osc, gain;
 
-  function setLevel(level) {
-    level = Math.max(0, Math.min(1, level));
-    targetAngle = MIN_ANGLE + (MAX_ANGLE - MIN_ANGLE) * level;
-    updateAudio(level);
-    updateLed(level);
-  }
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new AudioContext();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.gain.value = 0;
+        osc.start();
+      }
 
-  function animate(time) {
-    if (!lastTime) lastTime = time;
-    const dt = time - lastTime;
-    lastTime = time;
+      function soundOn(level) {
+        initAudio();
+        osc.frequency.value = 120 + level * 880;
+        gain.gain.value = level * 0.15;
+      }
 
-    currentAngle += (targetAngle - currentAngle) * 0.015 * dt;
-    needle.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
+      function soundOff() {
+        if (gain) gain.gain.value = 0;
+      }
 
-    requestAnimationFrame(animate);
-  }
-  requestAnimationFrame(animate);
+      function setLevel(level) {
+        targetAngle = MIN_ANGLE + (MAX_ANGLE - MIN_ANGLE) * level;
+        soundOn(level);
+        led.style.visibility = level > 0.85 ? "visible" : "hidden";
+      }
 
-  /* INPUT */
-  button.addEventListener("pointerdown", () => {
-    if (!audioCtx) initAudio();
-    isPressed = true;
-    setLevel(1);
-  });
+      function animate(t) {
+        if (!lastTime) lastTime = t;
+        const dt = t - lastTime;
+        lastTime = t;
 
-  function release() {
-    isPressed = false;
-    setLevel(0);
-  }
+        currentAngle += (targetAngle - currentAngle) * 0.015 * dt;
+        needle.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
 
-  button.addEventListener("pointerup", release);
-  button.addEventListener("pointerleave", release);
-  button.addEventListener("pointercancel", release);
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
 
-  /* MODAL */
-  const modal = document.getElementById("modal");
-  document.getElementById("gear").onclick = () => modal.style.display = "flex";
-  function closeModal() { modal.style.display = "none"; }
+      btn.addEventListener("pointerdown", () => setLevel(1));
+      btn.addEventListener("pointerup", release);
+      btn.addEventListener("pointerleave", release);
+      btn.addEventListener("pointercancel", release);
 
-  document.getElementById("rangeAngle").oninput = e => {
-    const v = +e.target.value;
-    MIN_ANGLE = -v;
-    MAX_ANGLE = v;
-  };
+      function release() {
+        targetAngle = MIN_ANGLE;
+        soundOff();
+        led.style.visibility = "hidden";
+      }
 
-  document.getElementById("rangeLed").oninput = e => {
-    led.style.bottom = e.target.value + "px";
-  };
-</script>
+      /* ===== MODAL ===== */
+      const modal = document.getElementById("modal");
+      const gear = document.getElementById("gear");
 
-</body>
+      const minSlider = document.getElementById("minAngle");
+      const maxSlider = document.getElementById("maxAngle");
+      const ledSlider = document.getElementById("ledPos");
+
+      const minVal = document.getElementById("minVal");
+      const maxVal = document.getElementById("maxVal");
+      const ledVal = document.getElementById("ledVal");
+
+      function openModal() {
+        modal.style.display = "flex";
+      }
+      function closeModal() {
+        modal.style.display = "none";
+      }
+
+      gear.onclick = openModal;
+      modal.onclick = (e) => e.target === modal && closeModal();
+
+      function sync() {
+        minVal.textContent = MIN_ANGLE + "°";
+        maxVal.textContent = MAX_ANGLE + "°";
+        ledVal.textContent = LED_POS + "px";
+      }
+
+      minSlider.value = MIN_ANGLE;
+      maxSlider.value = MAX_ANGLE;
+      ledSlider.value = LED_POS;
+      sync();
+
+      minSlider.oninput = (e) => {
+        MIN_ANGLE = Number(e.target.value);
+        localStorage.setItem("minAngle", MIN_ANGLE);
+        sync();
+      };
+
+      maxSlider.oninput = (e) => {
+        MAX_ANGLE = Number(e.target.value);
+        localStorage.setItem("maxAngle", MAX_ANGLE);
+        sync();
+      };
+
+      ledSlider.oninput = (e) => {
+        LED_POS = Number(e.target.value);
+        led.style.bottom = LED_POS + "px";
+        localStorage.setItem("ledPos", LED_POS);
+        sync();
+      };
+    </script>
+  </body>
 </html>
