@@ -2,6 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="rainbow.png" type="image/png" />
     <link rel="shortcut icon" href="rainbow.png" />
     <link rel="apple-touch-icon" href="rainbow.png" />
@@ -82,7 +83,6 @@
         /* DESATIVAR SELEÇÃO */
         user-select: none;
         -webkit-user-select: none;
-        -webkit-touch-callout: none;
       }
 
       button:hover {
@@ -100,7 +100,7 @@
         }
 
         .led {
-          bottom: 235px;
+          bottom: 246px;
           width: 20px;
           height: 20px;
         }
@@ -135,6 +135,46 @@
       let targetAngle = MIN_ANGLE;
       let lastTime = null;
 
+      /* ==== AUDIO ==== */
+      let audioCtx, oscillator, gainNode;
+
+      function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        oscillator = audioCtx.createOscillator();
+        gainNode = audioCtx.createGain();
+
+        oscillator.type = "sine";
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        gainNode.gain.value = 0;
+        oscillator.start();
+      }
+
+      function updateAudio(level) {
+        if (!audioCtx) return;
+        oscillator.frequency.value = 120 + level * 880;
+        gainNode.gain.value = level * 0.15;
+      }
+
+      function updateVibration(level) {
+        if (!navigator.vibrate) return;
+        navigator.vibrate(5 + level * 25);
+      }
+
+      function updateLed(level) {
+        led.style.visibility = level > 0.85 ? "visible" : "hidden";
+      }
+
+      function setLevel(level) {
+        level = Math.max(0, Math.min(1, level));
+        targetAngle = MIN_ANGLE + (MAX_ANGLE - MIN_ANGLE) * level;
+
+        updateAudio(level);
+        updateVibration(level);
+        updateLed(level);
+      }
+
       function animate(time) {
         if (!lastTime) lastTime = time;
         const dt = time - lastTime;
@@ -166,6 +206,9 @@
       button.addEventListener("pointerup", release);
       button.addEventListener("pointerleave", release);
       button.addEventListener("pointercancel", release);
+      button.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+      });
     </script>
   </body>
 </html>
