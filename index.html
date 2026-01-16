@@ -1,167 +1,188 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="rainbow.png" type="image/png" />
-    <link rel="shortcut icon" href="rainbow.png" />
-    <link rel="apple-touch-icon" href="rainbow.png" />
-    <title>BOIOLOMETRO</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-      body {
-        background: #111;
-        color: #eee;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-      }
+  <title>BOIOLÔMETRO</title>
 
-      .vu-container {
-        position: relative;
-        width: min(90vw, 500px); /* responsivo */
-        padding-bottom: 80px;
-      }
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-      .vu-container img {
-        width: 100%;
-        display: block;
-      }
+    .vu-container {
+      position: relative;
+      width: 500px;
+      max-width: 96vw;
+      aspect-ratio: 5 / 3;
+    }
 
-      /* AGULHA */
-      .needle {
-        position: absolute;
-        width: 4px;
-        height: 300px; /* entra bem no mostrador */
-        background: black;
-        bottom: 20px; /* MESMO VALOR DO PIVÔ */
-        left: 50%;
-        transform-origin: bottom center;
-        transform: translateX(-50%) rotate(-35deg); /* MIN_ANGLE */
-        border-radius: 2px;
-        pointer-events: none;
-      }
+    .vu-container img {
+      width: 100%;
+      display: block;
+    }
 
-      /* PIVÔ */
-      .pivot {
-        position: absolute;
-        width: 14px;
-        height: 14px;
-        background: black;
-        border-radius: 50%;
-        bottom: 14px; /* ligeiramente abaixo da agulha */
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-      }
+    .needle {
+      position: absolute;
+      width: 4px;
+      height: 65%;
+      background: black;
+      bottom: 8%;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(-41deg);
+      border-radius: 2px;
+      pointer-events: none;
+    }
 
-      /* led */
-      .led {
-        position: absolute;
-        width: 25px;
-        height: 25px;
-        background: rgb(179, 7, 7);
-        border-radius: 50%;
-        bottom: 308px; /* ligeiramente abaixo da agulha */
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-        visibility: hidden;
-      }
+    .pivot {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: black;
+      border-radius: 50%;
+      bottom: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
 
-      button {
-        margin-top: 40px;
-        padding: 12px 30px;
-        font-size: 16px;
-        cursor: pointer;
-        touch-action: none;
-        border-radius: 30px;
+    .led {
+      position: absolute;
+      width: 6vw;
+      height: 6vw;
+      max-width: 26px;
+      max-height: 26px;
+      background: rgb(179, 7, 7);
+      border-radius: 50%;
+      bottom: 72%;
+      left: 50%;
+      transform: translateX(-50%);
+      visibility: hidden;
+    }
 
-        /* DESATIVAR SELEÇÃO */
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-touch-callout: none;
-      }
+    button {
+      margin-top: 30px;
+      padding: 16px 44px;
+      font-size: 20px;
+      border-radius: 30px;
+      cursor: pointer;
 
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
       button:hover {
         background: #066603;
         color: white;
       }
+    }
+  </style>
+</head>
 
-      @media (max-width: 480px) {
-        .needle {
-          height: 220px;
-        }
+<body>
 
-        .led {
-          bottom: 235px;
-          width: 20px;
-          height: 20px;
-        }
+  <div class="vu-container">
+    <img src="vu.jpg" alt="VU Meter">
+    <div class="needle" id="needle"></div>
+    <div class="pivot"></div>
+    <div class="led" id="led"></div>
+  </div>
 
-        button {
-          font-size: 18px;
-          padding: 16px 36px;
-        }
-      }
-    </style>
-  </head>
+  <button id="btn">BOIOLÔMETRO</button>
 
-  <body>
-    <div class="vu-container">
-      <img src="vu.jpg" alt="VU Meter" />
-      <div class="needle" id="needle"></div>
-      <div class="pivot"></div>
-      <div class="led" id="led"></div>
-    </div>
+  <script>
+    const needle = document.getElementById("needle");
+    const button = document.getElementById("btn");
+    const led = document.getElementById("led");
 
-    <button id="btn">BOIOLÔMETRO</button>
+    const MIN_ANGLE = -41;
+    const MAX_ANGLE = 41;
 
-    <script>
-      const needle = document.getElementById("needle");
-      const button = document.getElementById("btn");
-      const led = document.getElementById("led");
+    let currentAngle = MIN_ANGLE;
+    let targetAngle = MIN_ANGLE;
+    let lastTime = null;
 
-      const MIN_ANGLE = -41;
-      const MAX_ANGLE = 41;
+    /* ==== AUDIO ==== */
+    let audioCtx, oscillator, gainNode;
 
-      let currentAngle = MIN_ANGLE;
-      let targetAngle = MIN_ANGLE;
-      let lastTime = null;
+    function initAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      oscillator = audioCtx.createOscillator();
+      gainNode = audioCtx.createGain();
 
-      function animate(time) {
-        if (!lastTime) lastTime = time;
-        const dt = time - lastTime;
-        lastTime = time;
+      oscillator.type = "sine";
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
 
-        // constante de suavização (quanto maior, mais lento)
-        const speed = 0.015;
+      gainNode.gain.value = 0;
+      oscillator.start();
+    }
 
-        currentAngle += (targetAngle - currentAngle) * speed * dt;
+    function updateAudio(level) {
+      if (!audioCtx) return;
+      oscillator.frequency.value = 120 + level * 880;
+      gainNode.gain.value = level * 0.15;
+    }
 
-        needle.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
+    function updateVibration(level) {
+      if (!navigator.vibrate) return;
+      navigator.vibrate(5 + level * 25);
+    }
 
-        requestAnimationFrame(animate);
-      }
+    function updateLed(level) {
+      led.style.visibility = level > 0.85 ? "visible" : "hidden";
+    }
+
+    function setLevel(level) {
+      level = Math.max(0, Math.min(1, level));
+      targetAngle = MIN_ANGLE + (MAX_ANGLE - MIN_ANGLE) * level;
+
+      updateAudio(level);
+      updateVibration(level);
+      updateLed(level);
+    }
+
+    function animate(time) {
+      if (!lastTime) lastTime = time;
+      const dt = time - lastTime;
+      lastTime = time;
+
+      currentAngle += (targetAngle - currentAngle) * 0.015 * dt;
+      needle.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
 
       requestAnimationFrame(animate);
+    }
 
-      /* INPUT UNIVERSAL */
-      button.addEventListener("pointerdown", () => {
-        targetAngle = MAX_ANGLE;
-        led.style.visibility = "visible";
-      });
+    requestAnimationFrame(animate);
 
-      function release() {
-        targetAngle = MIN_ANGLE;
-        led.style.visibility = "hidden";
-      }
+    /* ==== INPUT TESTE ==== */
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      if (!audioCtx) initAudio();
+      setLevel(1);
+    });
 
-      button.addEventListener("pointerup", release);
-      button.addEventListener("pointerleave", release);
-      button.addEventListener("pointercancel", release);
-    </script>
-  </body>
+    function release() {
+      setLevel(0);
+    }
+
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointerleave", release);
+    button.addEventListener("pointercancel", release);
+  </script>
+
+</body>
 </html>
