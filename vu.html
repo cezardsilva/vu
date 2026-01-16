@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="rainbow.png" type="image/png">
+    <link rel="shortcut icon" href="rainbow.png">
+    <link rel="apple-touch-icon" href="rainbow.png">
+    <title>BOIOLOMETRO</title>
+
+    <style>
+      body {
+        background: #111;
+        color: #eee;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      .vu-container {
+        position: relative;
+        width: 500px;
+        padding-bottom: 80px; /* espaço pro pivô fora da imagem */
+      }
+
+      .vu-container img {
+        width: 100%;
+        display: block;
+      }
+
+      /* AGULHA */
+      .needle {
+        position: absolute;
+        width: 4px;
+        height: 300px; /* entra bem no mostrador */
+        background: black;
+        bottom: 20px; /* MESMO VALOR DO PIVÔ */
+        left: 50%;
+        transform-origin: bottom center;
+        transform: translateX(-50%) rotate(-35deg); /* MIN_ANGLE */
+        border-radius: 2px;
+        pointer-events: none;
+      }
+
+      /* PIVÔ */
+      .pivot {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: black;
+        border-radius: 50%;
+        bottom: 14px; /* ligeiramente abaixo da agulha */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+      }
+
+      /* led */
+      .led {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        background: rgb(179, 7, 7);
+        border-radius: 50%;
+        bottom: 308px; /* ligeiramente abaixo da agulha */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        visibility: hidden;
+      }
+      
+      button {
+        margin-top: 40px;
+        padding: 12px 30px;
+        font-size: 16px;
+        cursor: pointer;
+        touch-action: none;
+        border-radius: 30px;
+      }
+
+      button:hover {
+        background: #066603;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="vu-container">
+      <img src="vu.jpg" alt="VU Meter" />
+      <div class="needle" id="needle"></div>
+      <div class="pivot"></div>
+      <div class="led" id="led"></div>
+    </div>
+
+    <button id="btn">BOIOLÔMETRO</button>
+
+    <script>
+      const needle = document.getElementById("needle");
+      const button = document.getElementById("btn");
+      const led = document.getElementById("led");
+
+      const MIN_ANGLE = -41;
+      const MAX_ANGLE = 41;
+
+      let currentAngle = MIN_ANGLE;
+      let targetAngle = MIN_ANGLE;
+      let lastTime = null;
+
+      function animate(time) {
+        if (!lastTime) lastTime = time;
+        const dt = time - lastTime;
+        lastTime = time;
+
+        // constante de suavização (quanto maior, mais lento)
+        const speed = 0.015;
+
+        currentAngle += (targetAngle - currentAngle) * speed * dt;
+
+        needle.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
+
+        requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+
+      /* INPUT UNIVERSAL */
+      button.addEventListener("pointerdown", () => {
+        targetAngle = MAX_ANGLE;
+        led.style.visibility = "visible";
+      });
+
+      function release() {
+        targetAngle = MIN_ANGLE;
+        led.style.visibility = "hidden";
+      }
+
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointerleave", release);
+      button.addEventListener("pointercancel", release);
+    </script>
+  </body>
+</html>
